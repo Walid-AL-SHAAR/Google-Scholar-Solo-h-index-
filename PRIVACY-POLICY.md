@@ -19,9 +19,14 @@ Permissions
 The Extension requests the following permissions:
 
 ActiveTab: To read publicly visible author and publication information from the Google Scholar page you have open when you activate the extension
+
 Scripting: To inject the calculation script into Google Scholar pages to load all papers and compute the sole-author h-index
+
 Tabs: To verify that the active tab is a Google Scholar profile page before running any script
+
 scholar.google.* domains: Access to Google Scholar country domains where profile information is displayed
+
+
 
 These permissions are used solely to compute the Solo-h-index and display results. No data is collected or transmitted.
 
