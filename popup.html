@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Solo-h-index</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    :root {
+      --bg:        #0f1117;
+      --surface:   #181c27;
+      --border:    #252b3b;
+      --gold:      #c9a84c;
+      --gold-dim:  #7a6130;
+      --teal:      #3eb89a;
+      --teal-dim:  #1f5e4e;
+      --text:      #e8e4da;
+      --muted:     #7b7e8a;
+      --danger:    #e07070;
+      --radius:    6px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      width: 400px;
+      min-height: 200px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      line-height: 1.5;
+      overflow-x: hidden;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 18px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header-icon {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--gold-dim), var(--gold));
+      border-radius: var(--radius);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'DM Serif Display', serif;
+      font-size: 18px; color: #0f1117; flex-shrink: 0;
+    }
+    .header-text h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 14px; font-weight: 400; letter-spacing: 0.01em;
+    }
+    .header-text p { font-size: 11px; color: var(--muted); font-weight: 300; }
+
+    /* ── Body ── */
+    .body { padding: 16px 18px; }
+
+    /* ── State: idle ── */
+    #state-idle { text-align: center; padding: 24px 0 8px; }
+    #state-idle p {
+      font-size: 12px; color: var(--muted); margin-bottom: 16px; line-height: 1.6;
+    }
+    #state-idle em { color: var(--gold); font-style: normal; }
+
+    /* ── State: loading ── */
+    #state-loading {
+      display: none;
+      text-align: center;
+      padding: 24px 0 20px;
+    }
+    .load-icon {
+      width: 48px; height: 48px;
+      border: 3px solid var(--border);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .load-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 14px; color: var(--text); margin-bottom: 6px;
+    }
+    .load-subtitle { font-size: 11px; color: var(--muted); line-height: 1.6; }
+    .load-count {
+      display: inline-block;
+      margin-top: 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 5px 16px;
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      color: var(--teal);
+    }
+    .load-count .lc-num { font-size: 16px; font-weight: 500; }
+
+    /* Progress bar */
+    .progress-bar {
+      height: 2px;
+      background: var(--border);
+      border-radius: 1px;
+      margin: 16px 0 0;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+      border-radius: 1px;
+      width: 0%;
+      transition: width 0.4s ease;
+      animation: pulse-bar 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse-bar {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.6; }
+    }
+
+    /* ── State: error ── */
+    #state-error {
+      display: none;
+      background: rgba(224,112,112,0.08);
+      border: 1px solid rgba(224,112,112,0.25);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      font-size: 12px; color: var(--danger); line-height: 1.6;
+    }
+
+    /* ── State: result ── */
+    #state-result { display: none; }
+
+    .profile-pill {
+      display: none;
+      align-items: center; gap: 6px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; padding: 4px 10px 4px 8px;
+      margin-bottom: 14px; font-size: 11px; color: var(--muted);
+    }
+    .profile-pill span.dot {
+      width: 6px; height: 6px; background: var(--teal); border-radius: 50%;
+    }
+
+    /* H-index hero */
+    .hindex-hero {
+      display: flex; align-items: flex-end; gap: 14px;
+      margin-bottom: 16px; padding: 16px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); position: relative; overflow: hidden;
+    }
+    .hindex-hero::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--gold-dim), var(--gold), var(--gold-dim));
+    }
+    .hindex-value {
+      font-family: 'DM Mono', monospace;
+      font-size: 56px; font-weight: 500; color: var(--gold);
+      line-height: 1; letter-spacing: -2px;
+    }
+    .hindex-label { padding-bottom: 8px; }
+    .hindex-label strong { display: block; font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+    .hindex-label span { font-size: 11px; color: var(--muted); }
+
+    /* Stats */
+    .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 10px 12px; text-align: center;
+    }
+    .stat-card .val {
+      font-family: 'DM Mono', monospace; font-size: 20px; font-weight: 500;
+      color: var(--teal); display: block; line-height: 1.2;
+    }
+    .stat-card .lbl { font-size: 10px; color: var(--muted); display: block; margin-top: 2px; }
+
+    /* Paper list */
+    .section-label {
+      font-size: 10px; font-weight: 500; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 8px;
+    }
+    .paper-list {
+      max-height: 220px; overflow-y: auto;
+      display: flex; flex-direction: column; gap: 1px;
+      scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+    }
+    .paper-item {
+      display: grid; grid-template-columns: 26px 1fr 38px;
+      align-items: center; gap: 8px; padding: 7px 10px;
+      background: var(--surface); border-radius: 4px; transition: background 0.15s;
+    }
+    .paper-item:hover { background: #1e2335; }
+    .paper-item.qualifies .rank { color: var(--gold); }
+    .rank { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); text-align: center; }
+    .paper-title { font-size: 11px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.4; }
+    .paper-title .year { display: block; font-size: 10px; color: var(--muted); }
+    .paper-cites { font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; text-align: right; }
+    .paper-cites.qualifies     { color: var(--teal); }
+    .paper-cites.not-qualifies { color: var(--muted); }
+    .no-papers { text-align: center; padding: 20px; font-size: 12px; color: var(--muted); }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 9px 20px; border-radius: var(--radius);
+      font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+      cursor: pointer; border: none; transition: opacity 0.15s, transform 0.1s;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-primary {
+      background: linear-gradient(135deg, #a87e30, var(--gold));
+      color: #0f1117; width: 100%;
+    }
+    .btn-primary:hover:not(:disabled) { opacity: 0.9; }
+    .btn-secondary {
+      background: var(--surface); color: var(--muted);
+      border: 1px solid var(--border); font-size: 11px;
+      padding: 6px 14px; margin-top: 10px;
+    }
+    .btn-secondary:hover { color: var(--text); }
+
+    #btn-reset { display: none; }
+
+    /* Footer */
+    .footer {
+      border-top: 1px solid var(--border);
+      padding: 8px 18px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .footer span { font-size: 10px; color: var(--muted); }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="header-icon">h</div>
+    <div class="header-text">
+      <h1>Solo-h-index</h1>
+      <p>Google Scholar · Sole-author papers only</p>
+    </div>
+  </div>
+
+  <div class="body">
+
+    <!-- Idle -->
+    <div id="state-idle">
+      <p>
+        Open any <em>Google Scholar</em> profile page,<br />
+        then click below. All papers will be loaded<br />
+        automatically before the h-index is computed.
+      </p>
+      <button class="btn btn-primary" id="btn-calculate">
+        Calculate Solo-h-index
+      </button>
+    </div>
+
+    <!-- Loading -->
+    <div id="state-loading">
+      <div class="load-icon"></div>
+      <div class="load-title">Loading all papers&hellip;</div>
+      <div class="load-subtitle">
+        Clicking "Show more" automatically.<br />
+        This may take a moment for large profiles.
+      </div>
+      <div class="load-count">
+        <span class="lc-num" id="load-num">0</span> papers loaded
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    </div>
+
+    <!-- Error -->
+    <div id="state-error"></div>
+
+    <!-- Result -->
+    <div id="state-result">
+
+      <div class="profile-pill" id="profile-pill">
+        <span class="dot"></span>
+        <span id="profile-name-text"></span>
+      </div>
+
+      <div class="hindex-hero">
+        <div class="hindex-value" id="result-hindex">0</div>
+        <div class="hindex-label">
+          <strong>Solo-h-index</strong>
+          <span id="papers-loaded-label">Based on all loaded papers</span>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <span class="val" id="stat-sole">0</span>
+          <span class="lbl">Sole-author papers</span>
+        </div>
+        <div class="stat-card">
+          <span class="val" id="stat-coauth">0</span>
+          <span class="lbl">Co-authored papers</span>
+        </div>
+        <div class="stat-card">
+          <span class="val" id="stat-cites">0</span>
+          <span class="lbl">Sole-author citations</span>
+        </div>
+      </div>
+
+      <div class="section-label">Sole-Author Papers (ranked by citations)</div>
+      <div class="paper-list" id="paper-list"></div>
+
+      <div style="text-align:center">
+        <button class="btn btn-secondary" id="btn-reset">Recalculate</button>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <span id="footer-left">Open a Scholar profile to begin</span>
+    <span id="footer-right"></span>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
