@@ -40,4 +40,4 @@ This privacy policy may be updated occasionally. Any changes will be posted on t
 Contact
 For questions about this privacy policy, please contact:
 Dr. Walid Al-Shaar
-Email: [Your email address]
+Email: walid-al-shaar@hotmail.com 
